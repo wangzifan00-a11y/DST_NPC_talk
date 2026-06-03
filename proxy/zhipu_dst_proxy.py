@@ -33,39 +33,6 @@ MIN_API_INTERVAL_SECONDS = float(os.environ.get("DST_AI_MIN_API_INTERVAL", "4"))
 GENERATION_ATTEMPTS = max(1, int(os.environ.get("DST_AI_GENERATION_ATTEMPTS", "2")))
 RECENT_LINES_PER_PREFAB = max(1, int(os.environ.get("DST_AI_RECENT_LINES_PER_PREFAB", "4")))
 
-NPC_PROFILES = {
-    "pigman": {
-        "name": "猪人",
-        "style": "憨厚、忠诚、贪吃，说话像饥荒里的猪人，短促直接。",
-        "fallback": [
-            "朋友，猪猪想吃好多肉！",
-            "天黑了，猪猪很害怕！",
-            "朋友真好，猪猪开心！",
-            "猪猪今天非常勇敢呀！",
-        ],
-    },
-    "bunnyman": {
-        "name": "兔人",
-        "style": "紧张、爱干净、怕怪物，讨厌肉味，说话像地下兔人。",
-        "fallback": [
-            "别带肉味靠近兔兔呀！",
-            "黑暗在动，兔兔害怕！",
-            "这里要更加干净一点！",
-            "朋友，走路再轻一点！",
-        ],
-    },
-    "rabbit": {
-        "name": "兔子",
-        "style": "胆小、机警，只关心胡萝卜、洞口和逃跑，说话像普通小兔子。",
-        "fallback": [
-            "小兔只想快快回洞里！",
-            "胡萝卜香，小兔想要！",
-            "脚步太近，小兔要跑！",
-            "洞口安全，小兔放心！",
-        ],
-    },
-}
-
 LEGACY_NPC_TO_PROFILE = {
     "pigman": ("intelligent", "pigman"),
     "bunnyman": ("intelligent", "bunnyman"),
@@ -366,32 +333,6 @@ def fallback_line(npc: str, prefab: str = "unknown") -> str:
     return text
 
 
-def build_messages(npc: str, event: str, season: str, phase: str, day: str, cave: str) -> list[dict[str, str]]:
-    profile = NPC_PROFILES.get(npc, NPC_PROFILES["pigman"])
-    place = "洞穴" if cave == "1" else "地面"
-
-    return [
-        {
-            "role": "system",
-            "content": (
-                "你为电子游戏《饥荒联机版》的非玩家角色生成短台词。"
-                "只输出一句角色台词，不要解释，不要加引号，不要写角色名。"
-                f"必须不少于{MIN_TALK_CHARS}个且不超过{MAX_TALK_CHARS}个中文字符。"
-            ),
-        },
-        {
-            "role": "user",
-            "content": (
-                f"角色：{profile['name']}。"
-                f"风格：{profile['style']}"
-                f"事件：{event}。季节：{season}。时间段：{phase}。"
-                f"天数：{day}。地点：{place}。"
-                "生成一句随机、自然、不会破坏游戏氛围的中文短句。"
-            ),
-        },
-    ]
-
-
 def build_messages(npc: str, prefab: str, event: str, season: str, phase: str, day: str, cave: str) -> list[dict[str, str]]:
     npc, prefab = resolve_profile(npc, prefab)
     profile = NPC_PROFILES.get(npc, NPC_PROFILES["animal"])
@@ -468,41 +409,6 @@ def call_zhipu(messages: list[dict[str, str]]) -> str:
         raise RuntimeError(f"Zhipu HTTP {exc.code}") from exc
 
     return response_data["choices"][0]["message"]["content"]
-
-
-def generate_line(npc: str, entity: str, event: str, season: str, phase: str, day: str, cave: str) -> tuple[str, str]:
-    global last_api_call_at, last_error
-
-    if npc not in NPC_PROFILES:
-        npc = "pigman"
-
-    now = time.monotonic()
-    key = (npc, entity or "unknown", event, season, phase, cave)
-    cached = cache.get(key)
-    if cached and now - cached[0] <= CACHE_SECONDS:
-        return cached[1], "cache"
-
-    if now - last_api_call_at < MIN_API_INTERVAL_SECONDS:
-        return fallback_line(npc), "fallback_rate_limited"
-
-    try:
-        last_api_call_at = now
-        text = ""
-        for _ in range(GENERATION_ATTEMPTS):
-            raw_text = call_zhipu(build_messages(npc, event, season, phase, day, cave))
-            text = clean_text(raw_text)
-            if text:
-                break
-        if not text:
-            raise RuntimeError("model output outside length range")
-
-        last_error = None
-        cache[key] = (now, text)
-        return text, "zhipu"
-    except (RuntimeError, KeyError, IndexError, json.JSONDecodeError, urllib.error.URLError) as exc:
-        last_error = f"{type(exc).__name__}: {exc}"
-        proxy_log(f"[zhipu_dst_proxy] fallback for {npc}: {last_error}")
-        return fallback_line(npc), "fallback_error"
 
 
 def generate_line(
