@@ -39,6 +39,7 @@ local ENABLE_LOGS = Config("enable_logs", false)
 local PROXY_URL = Config("proxy_url", "http://127.0.0.1:8765/say")
 local MIN_INTERVAL = NormalizeOption(Config("min_interval_seconds", 20), 20, { 20, 40, 60 })
 local MAX_INTERVAL = math.max(MIN_INTERVAL, NormalizeOption(Config("max_interval_seconds", 40), 40, { 40, 60, 80 }))
+local TALKER_FONT_SIZE = NormalizeOption(Config("talker_font_size", 24), 24, { 16, 20, 24, 28, 32, 36, 40 })
 local GLOBAL_TALK_COOLDOWN = 1
 
 local GROUP_ENABLED =
@@ -57,7 +58,6 @@ local PROFILE_DATA =
         ensure_talker = true,
         force_say = true,
         no_talk_anim = true,
-        talker_fontsize = 28,
         talker_offset = Vector3 ~= nil and Vector3(0, -420, 0) or nil,
         fallback =
         {
@@ -73,7 +73,6 @@ local PROFILE_DATA =
         ensure_talker = true,
         force_say = true,
         no_talk_anim = true,
-        talker_fontsize = 24,
         talker_offset = Vector3 ~= nil and Vector3(0, -240, 0) or nil,
         fallback =
         {
@@ -89,7 +88,6 @@ local PROFILE_DATA =
         ensure_talker = true,
         force_say = true,
         no_talk_anim = true,
-        talker_fontsize = 22,
         talker_offset = Vector3 ~= nil and Vector3(0, -180, 0) or nil,
         fallback =
         {
@@ -105,7 +103,6 @@ local PROFILE_DATA =
         ensure_talker = true,
         force_say = true,
         no_talk_anim = true,
-        talker_fontsize = 20,
         talker_offset = Vector3 ~= nil and Vector3(0, -160, 0) or nil,
         fallback =
         {
@@ -121,7 +118,6 @@ local PROFILE_DATA =
         ensure_talker = true,
         force_say = true,
         no_talk_anim = true,
-        talker_fontsize = 26,
         talker_offset = Vector3 ~= nil and Vector3(0, -300, 0) or nil,
         fallback =
         {
@@ -137,7 +133,6 @@ local PROFILE_DATA =
         ensure_talker = true,
         force_say = true,
         no_talk_anim = true,
-        talker_fontsize = 22,
         talker_offset = Vector3 ~= nil and Vector3(0, -220, 0) or nil,
         fallback =
         {
@@ -153,7 +148,6 @@ local PROFILE_DATA =
         ensure_talker = true,
         force_say = true,
         no_talk_anim = true,
-        talker_fontsize = 24,
         talker_offset = Vector3 ~= nil and Vector3(0, -280, 0) or nil,
         fallback =
         {
@@ -169,7 +163,6 @@ local PROFILE_DATA =
         ensure_talker = true,
         force_say = true,
         no_talk_anim = true,
-        talker_fontsize = 24,
         talker_offset = Vector3 ~= nil and Vector3(0, -260, 0) or nil,
         fallback =
         {
@@ -185,7 +178,6 @@ local PROFILE_DATA =
         ensure_talker = true,
         force_say = true,
         no_talk_anim = true,
-        talker_fontsize = 24,
         talker_offset = Vector3 ~= nil and Vector3(0, -320, 0) or nil,
         fallback =
         {
@@ -201,7 +193,6 @@ local PROFILE_DATA =
         ensure_talker = true,
         force_say = true,
         no_talk_anim = true,
-        talker_fontsize = 24,
         talker_offset = Vector3 ~= nil and Vector3(0, -260, 0) or nil,
         fallback =
         {
@@ -477,9 +468,7 @@ local function EnsureTalker(inst, data)
     end
 
     if talker ~= nil then
-        if data.talker_fontsize ~= nil then
-            talker.fontsize = data.talker_fontsize
-        end
+        talker.fontsize = TALKER_FONT_SIZE
         if GLOBAL.TALKINGFONT ~= nil then
             talker.font = GLOBAL.TALKINGFONT
         end

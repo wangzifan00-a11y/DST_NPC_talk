@@ -81,6 +81,21 @@ configuration_options =
         default = 40,
     },
     {
+        name = "talker_font_size",
+        label = "Talk bubble font size",
+        options =
+        {
+            { description = "16", data = 16 },
+            { description = "20", data = 20 },
+            { description = "24", data = 24 },
+            { description = "28", data = 28 },
+            { description = "32", data = 32 },
+            { description = "36", data = 36 },
+            { description = "40", data = 40 },
+        },
+        default = 24,
+    },
+    {
         name = "proxy_url",
         label = "Local proxy URL",
         options =
